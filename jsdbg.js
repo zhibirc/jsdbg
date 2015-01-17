@@ -1,25 +1,50 @@
 (function (root, undefined) {
+    'use strict';
+
     /** Available names for module name. */
     var fit_names = ['DBG', 'DEBUG', 'DEBUGGER'],
-        dbg_control = fit_names.forEach(function (elem) {
-          if (root[elem] === undefined) {
-            return root[elem] = {}, root[elem];
-          }
-        });
-   
-   /** Verify each method in the native console and add all methods to the custom one. */
-   if (typeof console !== 'undefined' ) {
-	  $.DBG = {};
-	  for (var prop in console) {
-		  if (Object.prototype.hasOwnProperty.call(console, prop)) {
-			  Object.defineProperty($.DBG, prop, {
-				  enumerable: false,
-                  configurable: false,
-                  writable: false,
-				  value: console[prop] 
-			  });
-		  }
-	  }
-  }
-  return dbg_control;
+        has_own = Object.prototype.hasOwnProperty,
+        is_console_defined = typeof console !== 'undefined',
+        dbg_control,
+        fit_props,
+        support;
+
+    fit_names.some(function (elem) {
+        if (root[elem] === undefined) {
+            dbg_control = root[elem] = {};
+            dbg_control.NAME = elem;
+            return true;
+        }
+    });
+
+    support = {
+        intro: {
+            0: '\u25C0 Introduction to JSDBG \u25B6\n\nNow your debug tool is available under the ' + dbg_control.NAME,
+            1: ' name. Naturally, as the built-in console it has a lot of methods and some properties, full list of which and information about common usage are always available by typing\n\n',
+            2: dbg_control.NAME + '.HELP',
+            3: '\n\nInformation about methods is identical to standard native console ones. But keep in mind that there are additional functionality and possibilities, so read documentation.'
+        },
+        help_head: '\u25C0 JSDBG HELP \u25B6'
+    };
+
+    is_console_defined && typeof console.log === 'function' && console.log(support.intro[0] + support.intro[1] + support.intro[2] + support.intro[3]);
+
+    /** Verify each method in the native console and add all methods to the custom one. */
+    if (is_console_defined) {
+        // Here are properties supported by all major browsers nowadays, other are browser specific and redundant here.
+        fit_props = ['log', 'warn', 'error', 'info', 'dir', 'time', 'timeEnd', 'assert', 'debug', 'count', 'group', 'groupEnd', 'groupCollapsed', 'trace', 'clear'];
+        for (var prop in console) {
+            if ((has_own.call(console, prop) || has_own.call(Object.getPrototypeOf(console.constructor.prototype), prop)) && ~fit_props.indexOf(prop)) {
+                Object.defineProperty(dbg_control, prop, {
+                    enumerable: false,
+                    configurable: false,
+                    writable: false,
+                    value: console[prop]
+                });
+            }
+        }
+    }
+
+    dbg_control.VERSION = '1.0';
+    dbg_control.HELP = support.help_head;
 }(window));
