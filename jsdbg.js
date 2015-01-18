@@ -4,7 +4,8 @@
     /** Available names for module name. */
     var fit_names = ['DBG', 'DEBUG', 'DEBUGGER'],
         has_own = Object.prototype.hasOwnProperty,
-        is_console_defined = typeof console !== 'undefined',
+        con = window.console,
+        is_console_defined = typeof con !== 'undefined',
         dbg_control,
         fit_props,
         support;
@@ -41,15 +42,21 @@
     /** Verify each method in the native console and add all methods to the custom one. */
     if (is_console_defined) {
         // Here are properties supported by all major browsers nowadays, other are browser specific and redundant here.
-        fit_props = ['log', 'warn', 'error', 'info', 'dir', 'time', 'timeEnd', 'assert', 'debug', 'count', 'group', 'groupEnd', 'groupCollapsed', 'trace', 'clear'];
-        for (var prop in console) {
-            if ((has_own.call(console, prop) || has_own.call(Object.getPrototypeOf(console.constructor.prototype), prop)) && ~fit_props.indexOf(prop)) {
-                Object.defineProperty(dbg_control, prop, {
-                    value: console[prop]
+        fit_props = ['log', 'warn', 'error', 'info', 'dir', 'time', 'timeEnd', 'assert', 'debug', 'count', 'group', 'groupEnd', 'groupCollapsed', 'trace'];
+        for (var method in console) {
+            if (con[method] && ~fit_props.indexOf(method)) {
+                Object.defineProperty(dbg_control, method, {
+                    value: function () {
+                        con[method].apply(con, arguments);
+                    }
                 });
             }
         }
     }
+
+    dbg_control.toggle = function (state) {
+
+    };
 
     dbg_control.VERSION = '1.0';
     dbg_control.HELP = support.help;
