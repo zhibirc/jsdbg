@@ -6,8 +6,8 @@
         has_own = Object.prototype.hasOwnProperty,
         con = root.console,
         is_console_defined = typeof con !== 'undefined',
-        flags = {
-            toggle: 1,
+        base_control_flags = {
+            activity: 1,
             logging: 0,
             remote: 0
         },
@@ -28,7 +28,9 @@
 
     // TODO: this is a stand-alone part of program, documentation and nothing else. Make it easy to understand and complete for effective usage.
     support = {
-        errors: {},
+        errors: {
+            wrong_flag: 'Flags may be 1 or 0 only, any other values are wrong! For details please refer to the documentation (' + dbg_control.NAME + '.HELP).'
+        },
         intro: {
             0: '\u25C0 Introduction to JSDBG \u25B6\n\nNow your debug tool is available under the "' + dbg_control.NAME,
             1: '" name. Naturally, as the built-in console it has a lot of methods and some properties, full list of which and information about common usage are always available by typing\n\n',
@@ -36,7 +38,12 @@
             3: '\n\nInformation about methods is identical to standard native console ones. But keep in mind that there are additional functionality and possibilities, so read documentation.'
         },
         state: {
-            header: '\u25C0 JSDBG state report \u25B6'
+            header: '\u25C0 JSDBG state report \u25B6\n\n',
+            body: {
+                0: 'Debugger ' + (base_control_flags.activity ? 'ENABLED (1)' : 'DISABLED (0)') + '.\n',
+                1: 'Logging ' + (base_control_flags.logging ? 'ENABLED (1)' : 'DISABLED (0)') + '.\n',
+                2: 'Remote control ' + (base_control_flags.remote ? 'ENABLED (1)' : 'DISABLED (0)') + '.\n'
+            }
         },
         help: {
             header: '\u25C0 JSDBG HELP \u25B6'
@@ -50,23 +57,29 @@
         // Here are properties supported by all major browsers nowadays, other are browser specific and redundant here.
         fit_props = ['log', 'warn', 'error', 'info', 'dir', 'time', 'timeEnd', 'assert', 'debug', 'count', 'group', 'groupEnd', 'groupCollapsed', 'trace'];
         for (var method in con) {
-            if (con[method] && ~fit_props.indexOf(method)) {
-                Object.defineProperty(dbg_control, method, {
-                    value: function () {
-                        flags.toggle && con[method].apply(con, arguments);
-                    }
-                });
-            }
+            (function (m) {
+                if (con[m] && ~fit_props.indexOf(m)) {
+                    Object.defineProperty(dbg_control, m, {
+                        value: function () {
+                            if (base_control_flags.activity === 1) {
+                                con[m].apply(con, arguments);
+                            } else {
+                                return void(0);
+                            }
+                        }
+                    });
+                }
+            }(method));
         }
     }
 
-    dbg_control.setState = function (toggle, logging, remote) {
-        if (toggle === 1) {
-            flags.toggle = 1;
-        } else if (toggle === 0) {
-            flags.toggle = 0;
+    dbg_control.setState = function (activity, logging, remote) {
+        if (activity === 1) {
+            base_control_flags.activity = 1;
+        } else if (activity === 0) {
+            base_control_flags.activity = 0;
         } else {
-            throw new Error(support.errors);
+            throw new Error(support.errors.wrong_flag);
         }
     };
 
