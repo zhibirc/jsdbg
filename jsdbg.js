@@ -85,7 +85,7 @@
 
     dbg_control.VERSION = '1.0';
     dbg_control.HELP = support.help;
-    dbg_control.STATE = support.state;
+    dbg_control.STATE = support.state.header + Object.keys(support.state.body).reduce(function (init, el) { return init += support.state.body[el]; }, '');
 
     Object.freeze(dbg_control);
 }(window));
