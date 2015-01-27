@@ -13,17 +13,16 @@
     /** Here we are. */
     var con = root.console,
         has_own = Object.prototype.hasOwnProperty,
-        is_console_defined = typeof con !== 'undefined',
+        is_console_defined = typeof con != 'undefined',
         base_control_flags = {
             activity: 1,
-            logging: 0,
             remote: 0
         },
         ___reference,
         fit_props,
         support;
 
-    if (typeof root.___ === 'undefined') {
+    if (typeof root.___ == 'undefined') {
         Object.defineProperty(root, '___', {
             value: {}
         });
@@ -33,11 +32,27 @@
     ___reference.NAME = '___';
 
     /**
+     * Service function to throw errors, display error messages and their stack.
+     *
+     * @param {Object} type
+     * @param {String} msg
+     */
+    function processErrors(type, msg) {
+        try {
+            throw new type(msg);
+        } catch (e) {
+            return e.stack;
+        }
+    }
+
+    /**
      * @todo This is a stand-alone part of the program, documentation and nothing else. Make it easy to understand and complete for effective usage.
      */
     support = {
         errors: {
-            wrong_flag: 'Flags may be 1 or 0 only, any other values are wrong! For details please refer to the documentation (' + ___reference.NAME + '.HELP).'
+            wrong_params_set: 'Not enough arguments provided while use setState() for debug settings (expect 2)! For details please refer to the documentation (' + ___reference.NAME + '.HELP).',
+            wrong_activity_flag: 'Activity flags may be 1 or 0 only, any other values are wrong! For details please refer to the documentation (' + ___reference.NAME + '.HELP).',
+            wrong_remote_settings: 'Remote settings object must have the following structure: { on: 1/0, url: url }.'
         },
         intro: {
             0: '\u25C0 Introduction to JSDBG \u25B6\n\nNow your debug tool is available under the "' + ___reference.NAME,
@@ -58,7 +73,7 @@
         }
     };
 
-    is_console_defined && typeof con.log === 'function' && con.log(support.intro[0] + support.intro[1] + support.intro[2] + support.intro[3]);
+    is_console_defined && typeof con.log == 'function' && con.log(support.intro[0] + support.intro[1] + support.intro[2] + support.intro[3]);
 
     /** Verify each method in the native console and add all methods to the custom one. */
     if (is_console_defined) {
@@ -81,14 +96,29 @@
         }
     }
 
-    ___reference.setState = function (activity, logging, remote) {
-        if (activity === 1) {
-            base_control_flags.activity = 1;
-        } else if (activity === 0) {
-            base_control_flags.activity = 0;
-        } else {
-            throw new Error(support.errors.wrong_flag);
+    /**
+     * Complex method to set debug tool behaviour: activity (enable/disable debug mode), remote (send or not debug information to the remote host).
+     *
+     * @param {Number} activity
+     * @param {Object} remote
+     */
+    ___reference.setState = function (activity, remote) {
+        if (typeof activity == 'undefined' || typeof remote == 'undefined') {
+            processErrors(SyntaxError, support.errors.wrong_params_set);
         }
+
+        if (!~[0, 1].indexOf(activity)) {
+            processErrors(SyntaxError, support.errors.wrong_activity_flag);
+        }
+
+        if (!has_own.call(remote, 'on') || !has_own.call(remote, 'url') || !~[0, 1].indexOf(remote.on) || typeof remote.url != 'string') {
+            processErrors(SyntaxError, support.errors.wrong_remote_settings);
+        }
+
+        base_control_flags.activity = +(activity === 1);
+        base_control_flags.remote = +(remote.on === 1);
+
+        // TODO: Working with 'url' property, add service function to remote connection, refactoring.
     };
 
     ___reference.VERSION = '1.0';
